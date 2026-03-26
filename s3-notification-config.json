@@ -1,0 +1,11 @@
+{
+  "TopicConfigurations": [{
+    "TopicArn": "arn:aws:sns:us-east-1:631195140156:image-upload-notifications",
+    "Events": ["s3:ObjectCreated:*"],
+    "Filter": {
+      "Key": {
+        "FilterRules": [{"Name": "prefix", "Value": "uploads/"}]
+      }
+    }
+  }]
+}

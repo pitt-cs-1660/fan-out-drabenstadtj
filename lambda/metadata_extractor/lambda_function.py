@@ -39,23 +39,42 @@ def lambda_handler(event, context):
     print("=== metadata extractor invoked ===")
 
     # todo: loop through event['Records']
-    # todo: for each record, get the SNS message string from record['Sns']['Message']
-    # todo: parse the SNS message string as JSON to get the S3 event
-    # todo: loop through the S3 event's 'Records'
-    # todo: extract bucket name from s3_record['s3']['bucket']['name']
-    # todo: extract object key from s3_record['s3']['object']['key']
-    # todo: extract file size from s3_record['s3']['object']['size']
-    # todo: extract event time from s3_record['eventTime']
-    # todo: print metadata in the required [METADATA] format:
-    #       print(f"[METADATA] File: {key}")
-    #       print(f"[METADATA] Bucket: {bucket}")
-    #       print(f"[METADATA] Size: {size} bytes")
-    #       print(f"[METADATA] Upload Time: {event_time}")
-    # todo: build a metadata dict with file, bucket, size, upload_time
-    # todo: get the filename from the key (e.g. "uploads/test.jpg" -> "test")
-    #       hint: use os.path.splitext(key.split('/')[-1])[0]
-    # todo: write the metadata dict as JSON to s3 at processed/metadata/{filename}.json
-    #       hint: s3.put_object(Bucket=bucket, Key=f"processed/metadata/{filename}.json",
-    #             Body=json.dumps(metadata), ContentType='application/json')
+    for record in event['Records']:
+        # todo: for each record, get the SNS message string from record['Sns']['Message']
+        SNS_message = record['Sns']['Message']
+        # todo: parse the SNS message string as JSON to get the S3 event
+        S3_event  = json.loads(SNS_message)
+        # todo: loop through the S3 event's 'Records'
+        for S3_record in S3_event['Records']:
+            bucket_name = S3_record['s3']['bucket']['name']
+
+
+            object_key = S3_record['s3']['object']['key']
+
+            # todo: extract file size from s3_record['s3']['object']['size']
+                        # todo: extract file size from s3_record['s3']['object']['size']
+            file_size =  S3_record['s3']['object']['size']
+            # todo: extract event time from s3_record['eventTime']
+            event_time = S3_record['eventTime']
+            # todo: print metadata in the required [METADATA] format:
+            print(f"[METADATA] File: {object_key}")
+            print(f"[METADATA] Bucket: {bucket_name}")
+            print(f"[METADATA] Size: {file_size} bytes")
+            print(f"[METADATA] Upload Time: {event_time}")
+            # todo: build a metadata dict with file, bucket, size, upload_time
+            metadata = {
+                'file' : object_key,
+                'bucket': bucket_name,
+                'size' : file_size,
+                'upload_time' : event_time
+            }
+            # todo: get the filename from the key (e.g. "uploads/test.jpg" -> "test")
+            #       hint: use os.path.splitext(key.split('/')[-1])[0]
+            file_name = os.path.splitext(object_key.split('/')[-1])[0]
+            # todo: write the metadata dict as JSON to s3 at processed/metadata/{filename}.json
+            #       hint: s3.put_object(Bucket=bucket, Key=f"processed/metadata/{filename}.json",
+            #             Body=json.dumps(metadata), ContentType='application/json')
+            s3.put_object(Bucket=bucket_name, Key=f"processed/metadata/{file_name}.json",
+                        Body=json.dumps(metadata), ContentType='application/json')
 
     return {'statusCode': 200, 'body': 'metadata extracted'}

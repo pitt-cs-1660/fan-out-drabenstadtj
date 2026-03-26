@@ -42,21 +42,34 @@ def lambda_handler(event, context):
     print("=== image validator invoked ===")
 
     # todo: loop through event['Records']
-    # todo: for each record, get the SNS message string from record['Sns']['Message']
-    # todo: parse the SNS message string as JSON to get the S3 event
-    # todo: loop through the S3 event's 'Records'
-    # todo: extract bucket name from s3_record['s3']['bucket']['name']
-    # todo: extract object key from s3_record['s3']['object']['key']
-    # todo: use is_valid_image() to check the file extension
-    # todo: if valid:
+    for record in event['Records']:
+        # todo: for each record, get the SNS message string from record['Sns']['Message']
+        SNS_message_string = record['Sns']['Message']
+        # todo: parse the SNS message string as JSON to get the S3 event
+        S3_event = json.loads(SNS_message_string)
+        # todo: loop through the S3 event's 'Records'
+        for S3_record in S3_event['Records']:
+            # todo: extract bucket name from s3_record['s3']['bucket']['name']
+            bucket_name = S3_record['s3']['bucket']['name']
+            # todo: extract object key from s3_record['s3']['object']['key']
+            object_key = S3_record['s3']['object']['key']
+            # todo: use is_valid_image() to check the file extension
+            if is_valid_image(object_key):
+                # todo: if valid:
     #         - print the [VALID] message: print(f"[VALID] {key} is a valid image file")
+                print(f"[VALID] {object_key} is a valid image file")
     #         - get the filename from the key (e.g. "uploads/test.jpg" -> "test.jpg")
     #           hint: use key.split('/')[-1]
+                filename = object_key.split('/')[-1]
     #         - copy the object to processed/valid/{filename}
     #           hint: s3.copy_object(Bucket=bucket, Key=f"processed/valid/{filename}",
     #                 CopySource={'Bucket': bucket, 'Key': key})
-    # todo: if invalid:
-    #         - print the [INVALID] message: print(f"[INVALID] {key} is not a valid image type")
-    #         - raise ValueError to trigger DLQ
+                s3.copy_object(Bucket=bucket_name, Key=f"processed/valid/{filename}", CopySource={'Bucket': bucket_name, 'Key': object_key})
+            else:
+                print(f"[INVALID] {object_key} is not a valid image type")
+                raise ValueError
+                # todo: if invalid:
+                #         - print the [INVALID] message: print(f"[INVALID] {key} is not a valid image type")
+                #         - raise ValueError to trigger DLQ
 
     return {'statusCode': 200, 'body': 'validation complete'}
